@@ -1,0 +1,181 @@
+---
+title: "Mod6Assgn1"
+author: "Sharon Braxton"
+date: "6/25/2019"
+output: word_document
+---
+# Module 6 - Assignment 1
+## Braxton, Sharon
+### Clustering Assignment
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Install and Load libraries
+
+```{r Load necessary libraries}
+options(tidyverse.quiet = TRUE)
+library(tidyverse)
+library(cluster)    #algorithms for clustering
+library(factoextra) #visualization
+library(dendextend) #viewing clustering dendograms
+```
+
+## Read in the data from the “trucks.csv” file into a data frame/tibble named “trucks”  
+```{r Read in trucks.csv and create df.trucks}
+trucks <- read_csv("trucks.csv")
+str(trucks)
+summary(trucks)
+```
+
+### Task 1: Including Plots Distance vs. Speeding
+
+Plot the relationship between Distance and Speeding. Describe this relationship. Does there appear
+to be any natural clustering of drivers?
+
+```{r Plot Distance vs. Speeding}
+ggplot(trucks, aes(x=Distance,y=Speeding,color=Speeding)) + geom_point() +
+  labs(caption="Distance vs. Speeding") + 
+  theme(plot.caption = element_text(hjust = 0.5, size=rel(1.2)))
+```      
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Most drivers tend to drive at least 5 mph over the speed limit, although not by much. The drivers that have the higher percentage of speeding are in the 35 - about 65miles/day drivers.  Even in the greater distance drivers with distances of 150 to about 250 miles/day, they stay at least 5 mph over the speed limit.  Many of the drivers of lower distances (locals) stay within the 0 - 15mph over the speed limit.  Once over 15, the rate of over the limit seems to be in the 22 to 40 mph over the limit.  The speeding range seems to fall off to almost non-existent in the 76 to 110 miles/day drivers.  The speeding picks back up when the distance increases to the 150miles/day (communters).  Yes, there definitely appears to be a natural clustering of drivers.
+
+### Task 2: Create a new data frame (called trucks2) that excludes the Driver_ID variable and includes scaled versions of the Distance and Speeding variables. NOTE: Wrap the scale(trucks2) command in an as.data.frame command to ensure that the resulting object is a data frame. By default, scale converts data frames to lists  
+
+```{r Create new data frame}
+trucks_new <- trucks %>% select("Distance","Speeding")
+str(trucks_new)
+summary(trucks_new)
+```
+
+```{r Scale New (trucks) data frame}
+trucks2 =  as.data.frame(scale(trucks_new))
+summary(trucks2)
+```
+
+###Task 3 Use k-Means clustering with two clusters (k=2) to cluster the trucks2 data frame. Use a random number seed of 1234. Visualize the clusters using the fviz_cluster function. Comment on the clusters.
+
+```{r Cluster trucks2 using k-means}
+set.seed(1234)
+trucks_c1 <- kmeans(trucks2, 2)
+```
+
+```{r Visualize the clustering using fviz_cluster}
+fviz_cluster(trucks_c1, trucks2)
+```      
+The clusters appear to meet, but not overly intersect.
+
+### Task 4: Use the two methods from the k-Means lecture to identify the optimal number of clusters. Use a random number seed of 123 for these methods. Is there consensus between these two methods as the optimal number of clusters?
+
+```{r Identify optimal number of clusters with a seed of 123 utilizing the within-cluster variation}
+set.seed(123)
+fviz_nbclust(trucks2, kmeans, method = "wss") #minimize within-cluster variation
+```        
+This method recommends 4 as the number of clusters
+
+####Silhoulette method  
+```{r Maximize cluster silhoulette}
+set.seed(123)
+fviz_nbclust(trucks2, kmeans, method = "silhouette") #maximize how well points sit in their clusters
+```
+This method recommends 4 as the number of clusters, also.           
+The consensus between the two methods is an optimal number of clusters being 4.       
+
+
+### Task 5: Use the optimal number of clusters that you identified in Task 4 to create k-Means clusters. Use a random number seed of 1234. Use the fviz_cluster function to visualize the clusters.
+
+```{r Cluster trucks2 using k-means of 4}
+set.seed(1234)
+trucks_c1 <- kmeans(trucks2, 4)
+```
+```{r Visualize the 4 clusters using fviz_cluster}
+fviz_cluster(trucks_c1, trucks2)
+```
+  
+
+###Task 6: In words, how would you characterize the clusters you created in Task 5?
+The result is 4 pretty distinct clusters of data.  Although, there's a bit of overlap within clusters 2 and 4.
+
+Before starting Task 7, read in the “wineprice.csv” file into a data frame called wine. This is a small dataset
+containing wine characteristics and the price of wine at auction. WinterRain refers to the amount of rain
+received in winter, AGST refers to the average growing season temperature, HarvestRain refers to the amount
+of rain received in the harvest season, Age refers to the age of the wine when sold at auction, and FrancePop
+refers to the population of France at the time the wine was sold at auction.
+
+```{r Read in wineprice.csv}
+wine <- read_csv("wineprice.csv")
+str(wine)
+summary(wine)
+```
+Create a new data frame called wine2 that removes the Year and FrancePop variables and scales the other variables.
+
+```{r Create a new data frame wine2}
+#wine without Year and FrancePop
+
+wine2  <- wine %>% select("Price","WinterRain", "AGST", "HarvestRain", "Age")
+str(wine2)
+summary(wine2)
+```
+
+```{r Scale variables}
+wine2_scaled = as.data.frame(scale(wine2))
+summary(wine2_scaled)
+```    
+
+###Task 7: Use the two methods from Task 4 to determine the optimal number of k-Means clusters for this data.  Use a random number seed of 123. Is there consensus between these two methods as the optimal number of clusters?
+
+```{r Use the within-cluster variation}
+set.seed(123)
+fviz_nbclust(wine2_scaled, kmeans, method = "wss") #minimize within-cluster variation
+```
+
+####Silhoulette method  
+```{r Maximize cluster silhoulette with }
+set.seed(123)
+fviz_nbclust(wine2_scaled, kmeans, method = "silhouette") #maximize how well points sit in their clusters
+```
+It looks like the consensus is about 5-6 clusters, weighing more toward 5.   
+
+####Task 8: Use the optimal number of clusters that you identified in Task 4 to create k-Means clusters. Use a random number seed of 1234. Use the fviz_cluster function to visualize the clusters.
+
+```{r Use the k-means with 5 clusters}
+set.seed(1234)
+wine_c2 <- kmeans(wine2_scaled, 5)
+```
+```{r Visualize the 5 clusters using fviz_cluster}
+fviz_cluster(wine_c2, wine2_scaled)
+```
+
+####Task 9: Use agglomerative clustering to develop a dendogram for the scaled wine data. Follow the same process from the lecture where we used a custom function to identify the distance metric that maximizes the “agglomerative coefficient”. Plot the dendogram.
+
+Agglomerative clustering  
+Start by identifying best dissimilarity measure. This is given by highest "agglomerative coefficient".  
+```{r identify highest agglomerative coefficient}
+m = c( "average", "single", "complete", "ward")
+names(m) = c( "average", "single", "complete", "ward")
+
+ac = function(x) {
+  agnes(wine2_scaled, method = x)$ac
+}
+map_dbl(m, ac)
+```      
+Ward's is highest. Use this to develop clusters. 
+ 
+```{r using Wards dissimilarity measure}
+hc = agnes(wine2_scaled, method = "ward") #change ward to other method if desired
+pltree(hc, cex = 0.6, hang = -1, main = "Agglomerative Dendrogram") 
+```     
+
+#### Task 10: Repeat Task 9, but with divisive clustering.
+Divisive clustering  
+```{r Divisive clustering on Wine}
+hc2 = diana(wine2_scaled)
+pltree(hc2, cex = 0.6, hang = -1, main = "Divisive Dendogram")
+```
+
+
